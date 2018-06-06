@@ -1,0 +1,15 @@
+static-dir:     "_env:STATIC_DIR:static"
+host:           "_env:HOST:*4"
+port:           "_env:PORT:3000"
+ip-from-header: "_env:IP_FROM_HEADER:false"
+#approot:        "_env:APPROOT:http://localhost:3000"
+
+database:
+  user:     "_env:PGUSER:PROJECTNAME"
+  password: "_env:PGPASS:PROJECTNAME"
+  host:     "_env:PGHOST:localhost"
+  port:     "_env:PGPORT:5432"
+  database: "_env:PGDATABASE:PROJECTNAME_dev"
+  poolsize: "_env:PGPOOLSIZE:10"
+
+copyright: 2018 FPComplete

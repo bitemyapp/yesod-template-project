@@ -1,0 +1,11 @@
+resolver: lts-11.5
+
+packages:
+- template
+- location:
+    git: git@github.com:bitemyapp/esqueleto.git
+    commit: 632f4408df05501b02d3e2f951bfdd335ea515ba
+  extra-dep: true
+
+extra-deps:
+- rio-0.1.2.0
