@@ -48,10 +48,14 @@ decode bs =
     Left e -> throwIO e
     Right x -> return $ T.unpack x
 
-readReplace :: MonadIO m => FilePath -> m ByteString
+readReplace :: (MonadIO m, MonadUnliftIO m) => FilePath -> m ByteString
 readReplace fp = do
   (year, _, _) <- toGregorian . utctDay <$> getCurrentTime
-  (encodeUtf8 . replaces year) <$> readFileUtf8 fp
+  binaryOrUtf8 <- tryAny (readFileUtf8 fp)
+  case binaryOrUtf8 of
+    (Left _) -> B.readFile fp
+    (Right utf8) ->
+      return $ (encodeUtf8 . replaces year) utf8
   where
     replaces year
       = T.replace "PROJECTNAME" "{{name}}"
@@ -69,7 +73,7 @@ readReplace fp = do
 
 main :: IO ()
 main = start $ do
-  let templatedir = "template"
+  let templatedir = "template/"
 
   -- Make sure it passes
   proc "stack" ["test"] runProcess_
@@ -77,14 +81,16 @@ main = start $ do
   rawout <- withWorkingDir templatedir
           $ proc "git" ["ls-files", "-z"]
             readProcessStdout_
+  logInfo (displayShow rawout)
   files <-
       mapM decode
     $ splitNulls
     $ BL.toStrict rawout
+  logInfo (displayShow files)
   let src = forM_ files $
               \fp ->
                 yield (fp, readReplace $ templatedir </> fp)
   runConduitRes $
        src
     .| createTemplate
-    .| sinkFile "yesod-template-project.hsfiles"
+    .| sinkFileCautious "yesod-template-project.hsfiles"
